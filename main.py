@@ -1,3 +1,7 @@
+import configparser
+import matplotlib.pyplot as plt
+from textblob import TextBlob
+import tweepy
 Here are some improvements that can be made to the Python program:
 
 1. Separate the Twitter API credentials from the main code and store them in a separate configuration file. This would make it easier to maintain and update the credentials without modifying the main code. You can use a library like `configparser` to read the credentials from a configuration file.
@@ -23,22 +27,23 @@ Here are some improvements that can be made to the Python program:
 With these improvements, the revised code would look like this:
 
 ```python
-import tweepy
-from textblob import TextBlob
-import matplotlib.pyplot as plt
-import configparser
+
 
 def read_config():
     config = configparser.ConfigParser()
     config.read('config.ini')
     return config['twitter_api']
 
+
 def twitter_api_setup():
     config = read_config()
-    auth = tweepy.OAuthHandler(config['consumer_key'], config['consumer_secret'])
-    auth.set_access_token(config['access_token'], config['access_token_secret'])
+    auth = tweepy.OAuthHandler(
+        config['consumer_key'], config['consumer_secret'])
+    auth.set_access_token(config['access_token'],
+                          config['access_token_secret'])
     api = tweepy.API(auth)
     return api
+
 
 def get_tweets(keyword):
     api = twitter_api_setup()
@@ -46,6 +51,7 @@ def get_tweets(keyword):
     for tweet in tweepy.Cursor(api.search, q=keyword, lang='en', tweet_mode='extended').items(100):
         tweets.append(tweet.full_text)
     return tweets
+
 
 def analyze_sentiment(tweet):
     blob = TextBlob(tweet)
@@ -57,53 +63,58 @@ def analyze_sentiment(tweet):
     else:
         return 'negative'
 
+
 def analyze_trends(tweets):
     if not tweets:
         return [], []
-    
+
     frequencies = Counter(tweets)
     sentiment_scores = [analyze_sentiment(tweet) for tweet in tweets]
     return frequencies.items(), sentiment_scores
 
+
 def visualize_data(frequencies, sentiment_scores, keyword):
     plt.figure(figsize=(10, 6))
-    
+
     plt.subplot(121)
     plt.bar(*zip(*frequencies))
     plt.title('Tweet Frequencies for {}'.format(keyword))
     plt.xlabel('Tweets')
     plt.ylabel('Frequency')
-    
+
     plt.subplot(122)
     sentiment_counts = Counter(sentiment_scores)
     labels = list(sentiment_counts.keys())
     sizes = list(sentiment_counts.values())
     plt.pie(sizes, labels=labels, autopct='%1.1f%%')
     plt.title('Sentiment Analysis for {}'.format(keyword))
-    
+
     plt.tight_layout()
     plt.show()
+
 
 def validate_keyword(keyword):
     # Add any custom validation rules for the keyword
     return bool(keyword)
 
+
 def main():
     # Enter the keyword you want to analyze
     keyword = input("Enter a keyword to analyze: ")
-    
+
     if not validate_keyword(keyword):
         print("Invalid keyword entered. Please try again.")
         return
-    
+
     # Get tweets based on the keyword
     tweets = get_tweets(keyword)
-    
+
     # Analyze trends and sentiment
     frequencies, sentiment_scores = analyze_trends(tweets)
-    
+
     # Visualize the data
     visualize_data(frequencies, sentiment_scores, keyword)
+
 
 if __name__ == '__main__':
     main()
